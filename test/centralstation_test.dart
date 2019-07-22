@@ -66,6 +66,7 @@ class TestAppWidget extends StatelessWidget {
                   .done()
                   .first;
               print("Command Response: $resp");
+              assert(resp == "Bad!");
             },
           ),
         ),
