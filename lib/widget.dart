@@ -154,7 +154,7 @@ Future _showError(BuildContext context, err) {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          content: Text(err ?? ""),
+          content: Text(err != null ? "$err" : ""),
           actions: <Widget>[
             // usually buttons at the bottom of the dialog
             FlatButton(

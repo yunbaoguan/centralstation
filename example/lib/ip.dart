@@ -23,6 +23,7 @@ class IPWidgetState extends State<IPWidget> {
         builder: (context) {
           return Center(
               child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               Text(ipAddress ?? "Not Ready"),
               RaisedButton(
@@ -31,7 +32,8 @@ class IPWidgetState extends State<IPWidget> {
                   setState(() {
                     this.ipAddress = null;
                   });
-                  CentralStation.sendCommand(context, GetIPCommand())
+                  CentralStation.sendCommand(context, GetIPCommand(),
+                          waitingText: "Getting Outbound IP Address...")
                       .first
                       .then((ip) {
                     setState(() {
