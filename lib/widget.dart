@@ -15,30 +15,28 @@ class CentralStation extends InheritedWidget {
   final ErrorHandler showErrorHandler;
 
   const CentralStation({
-    Key key,
-    @required this.runtime,
-    @required Widget child,
+    Key? key,
+    required this.runtime,
+    required Widget child,
     this.showWaiting = _buildWaiting,
     this.showErrorHandler = _showError,
     this.dismissWaiting = _dismissWaitingHandler,
-  })  : assert(runtime != null),
-        assert(child != null),
-        super(key: key, child: child);
+  }) : super(key: key, child: child);
 
-  static CentralStation of(BuildContext context) {
-    return context.inheritFromWidgetOfExactType(CentralStation)
-        as CentralStation;
+  static CentralStation? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<CentralStation>();
   }
 
-  static Stream sendCommand(BuildContext context, cmd, {String waitingText}) {
-    return CentralStation.of(context)
+  static Stream? sendCommand(BuildContext context, cmd,
+      {String waitingText = "Waiting..."}) {
+    return CentralStation.of(context)!
         .send(context, cmd, waitingText: waitingText);
   }
 
   static ChainCommandContext chain(BuildContext context, cmd,
-      {String waitingText}) {
+      {String waitingText = "Waiting..."}) {
     return ChainCommandContext(
-      CentralStation.of(context),
+      CentralStation.of(context)!,
       context,
       cmd,
       waitingText: waitingText,
@@ -48,26 +46,29 @@ class CentralStation extends InheritedWidget {
   @override
   bool updateShouldNotify(CentralStation old) => runtime != old.runtime;
 
-  Stream send(BuildContext context, dynamic command, {String waitingText}) {
+  Stream? send(BuildContext? context, dynamic command,
+      {String waitingText = "Waiting..."}) {
     if (context != null) {
       bool closed = false;
       showWaiting(context, waitingText).asStream().listen((_) {
         // mark waiting dialog is already closed
         closed = true;
       });
-      Stream st;
+      Stream? st;
       try {
         st = runtime.send(command).asBroadcastStream();
       } catch (err) {
         _tryDismissWaiting(context, alreadyClosed: closed);
         showErrorHandler(context, err);
       }
-      st.first.then((_) {
-        _tryDismissWaiting(context, alreadyClosed: closed);
-      }).catchError((err) {
-        _tryDismissWaiting(context, alreadyClosed: closed);
-        showErrorHandler(context, err);
-      });
+      if (st != null) {
+        st.first.then((_) {
+          _tryDismissWaiting(context, alreadyClosed: closed);
+        }).catchError((err) {
+          _tryDismissWaiting(context, alreadyClosed: closed);
+          showErrorHandler(context, err);
+        });
+      }
       // maybe null for no handler
       return st;
     } else {
@@ -86,15 +87,15 @@ class ChainCommandContext {
   final CentralStation centralStation;
   final BuildContext context;
   final String waitingText;
-  final ChainCommandContext parent;
-  final Function test;
+  final ChainCommandContext? parent;
+  final Function? test;
   final dynamic command;
   final dynamic failResult;
   ChainCommandContext(
     this.centralStation,
     this.context,
     this.command, {
-    this.waitingText,
+    this.waitingText = "Waiting...",
     this.parent,
     this.test,
     this.failResult,
@@ -115,10 +116,10 @@ class ChainCommandContext {
 
   Stream done() async* {
     if (parent != null) {
-      var parentResult = await parent.done().first;
-      if (test == null || test(parentResult)) {
+      var parentResult = await parent!.done().first;
+      if (test == null || test!(parentResult)) {
         var result = await centralStation
-            .send(context, command, waitingText: waitingText)
+            .send(context, command, waitingText: waitingText)!
             .first;
         yield result;
       } else {
@@ -126,7 +127,7 @@ class ChainCommandContext {
       }
     } else {
       var result = await centralStation
-          .send(context, command, waitingText: waitingText)
+          .send(context, command, waitingText: waitingText)!
           .first;
       yield result;
     }
@@ -157,7 +158,7 @@ Future _showError(BuildContext context, err) {
           content: Text(err != null ? "$err" : ""),
           actions: <Widget>[
             // usually buttons at the bottom of the dialog
-            FlatButton(
+            TextButton(
               child: Text("OK"),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -187,7 +188,7 @@ class _WaitingDialog extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             CircularProgressIndicator(),
-            this.text != null ? Text(this.text) : Container(),
+            Text(this.text),
           ],
         ),
       ),

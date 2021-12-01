@@ -1,5 +1,4 @@
 import 'package:event_bus/event_bus.dart';
-import 'package:flutter/foundation.dart';
 
 /// register event handler to runtime
 abstract class EventHandler {
@@ -23,10 +22,9 @@ class CentralStationRuntime {
   final Map<Type, CommandHandler> commandHandlers;
 
   CentralStationRuntime({
-    @required this.commandHandlers,
-    @required this.eventHandlers,
-  })  : assert(commandHandlers != null),
-        assert(eventHandlers != null) {
+    required this.commandHandlers,
+    required this.eventHandlers,
+  }) {
     // for event dispatching
     _eventBus.on().listen((event) {
       _dispatch(event);

@@ -26,7 +26,7 @@ class IPWidgetState extends State<IPWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               Text(ipAddress ?? "Not Ready"),
-              RaisedButton(
+              ElevatedButton(
                 child: Text("Get IP"),
                 onPressed: () {
                   setState(() {
