@@ -23,20 +23,20 @@ class CentralStation extends InheritedWidget {
     this.dismissWaiting = _dismissWaitingHandler,
   }) : super(key: key, child: child);
 
-  static CentralStation? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<CentralStation>();
+  static CentralStation of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<CentralStation>()!;
   }
 
   static Stream? sendCommand(BuildContext context, cmd,
       {String waitingText = "Waiting..."}) {
-    return CentralStation.of(context)!
+    return CentralStation.of(context)
         .send(context, cmd, waitingText: waitingText);
   }
 
   static ChainCommandContext chain(BuildContext context, cmd,
       {String waitingText = "Waiting..."}) {
     return ChainCommandContext(
-      CentralStation.of(context)!,
+      CentralStation.of(context),
       context,
       cmd,
       waitingText: waitingText,
