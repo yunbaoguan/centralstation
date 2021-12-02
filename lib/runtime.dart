@@ -1,9 +1,23 @@
 import 'package:event_bus/event_bus.dart';
 
 /// register event handler to runtime
+///
+/// EventHandler will have runtime set during initialzation
+///
 abstract class EventHandler {
+  CentralStationRuntime? runtime;
   bool canHandle(dynamic event);
   void handle(dynamic event);
+}
+
+///
+/// Command can be object, but if the actual command extend this Command,
+/// the runtime property will be set during execution.
+///
+/// For better command chaining support, extending this Command is recommended
+///
+class Command {
+  CentralStationRuntime? runtime;
 }
 
 /// command handler definition, should return a stream
@@ -25,6 +39,10 @@ class CentralStationRuntime {
     required this.commandHandlers,
     required this.eventHandlers,
   }) {
+    // setup current runtime in event handlers
+    eventHandlers.forEach((evh) {
+      evh.runtime = this;
+    });
     // for event dispatching
     _eventBus.on().listen((event) {
       _dispatch(event);
@@ -36,6 +54,10 @@ class CentralStationRuntime {
     var handler = commandHandlers[type];
     if (handler == null) {
       throw "No command handler for type: $type";
+    }
+    // set runtime if it is a command
+    if (command is Command) {
+      command.runtime = this;
     }
     return handler(command);
   }

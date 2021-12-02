@@ -1,6 +1,8 @@
+import 'package:centralstation/runtime.dart';
 import 'package:dio/dio.dart';
 
-class GetIPCommand {}
+class GetIPCommand extends Command {
+}
 
 final url = "http://ip.jsontest.com/";
 
