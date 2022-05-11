@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 import 'runtime.dart';
 
@@ -56,7 +54,6 @@ class CentralStation extends InheritedWidget {
     if (context != null) {
       if (inProgressDialogs.isNotEmpty) {
         // wait for other dialogs to finish
-        log("In-Progress Dialogs: $inProgressDialogs");
         var prevs = Future.wait(inProgressDialogs.map((d) => d.future));
         return Stream.fromFuture(
             prevs.then((_) => _sendUI(context, waitingText, command)?.first));

@@ -1,6 +1,6 @@
 name: centralstation
 description: Central Station for Command and Event Handling
-version: 0.9.10
+version: 1.0.0
 homepage: https://github.com/yunbaoguan/centralstation
 
 environment:
