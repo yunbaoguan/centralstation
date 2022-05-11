@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
@@ -13,8 +16,9 @@ class CentralStation extends InheritedWidget {
   final WaitingHandler showWaiting;
   final DismissWaitingHandler dismissWaiting;
   final ErrorHandler showErrorHandler;
+  final List<Completer> inProgressDialogs = [];
 
-  const CentralStation({
+  CentralStation({
     Key? key,
     required this.runtime,
     required Widget child,
@@ -48,32 +52,47 @@ class CentralStation extends InheritedWidget {
 
   Stream? send(BuildContext? context, dynamic command,
       {String waitingText = "Waiting..."}) {
+    // handle nested send
     if (context != null) {
-      bool closed = false;
-      showWaiting(context, waitingText).asStream().listen((_) {
-        // mark waiting dialog is already closed
-        closed = true;
-      });
-      Stream? st;
-      try {
-        st = runtime.send(command).asBroadcastStream();
-      } catch (err) {
-        _tryDismissWaiting(context, alreadyClosed: closed);
-        showErrorHandler(context, err);
+      if (inProgressDialogs.isNotEmpty) {
+        // wait for other dialogs to finish
+        log("In-Progress Dialogs: $inProgressDialogs");
+        var prevs = Future.wait(inProgressDialogs.map((d) => d.future));
+        return Stream.fromFuture(
+            prevs.then((_) => _sendUI(context, waitingText, command)?.first));
+      } else {
+        return _sendUI(context, waitingText, command);
       }
-      if (st != null) {
-        st.first.then((_) {
-          _tryDismissWaiting(context, alreadyClosed: closed);
-        }).catchError((err) {
-          _tryDismissWaiting(context, alreadyClosed: closed);
-          showErrorHandler(context, err);
-        });
-      }
-      // maybe null for no handler
-      return st;
     } else {
       return runtime.send(command);
     }
+  }
+
+  Stream? _sendUI(BuildContext context, String waitingText, command) {
+    Completer c = Completer();
+    inProgressDialogs.add(c);
+    showWaiting(context, waitingText).then((_) {
+      // mark waiting dialog is already closed
+      c.complete();
+      inProgressDialogs.remove(c);
+    });
+    Stream? st;
+    try {
+      st = runtime.send(command).asBroadcastStream();
+    } catch (err) {
+      _tryDismissWaiting(context, alreadyClosed: c.isCompleted);
+      showErrorHandler(context, err);
+    }
+    if (st != null) {
+      st.first.then((_) {
+        _tryDismissWaiting(context, alreadyClosed: c.isCompleted);
+      }).catchError((err) {
+        _tryDismissWaiting(context, alreadyClosed: c.isCompleted);
+        showErrorHandler(context, err);
+      });
+    }
+    // maybe null for no handler
+    return st;
   }
 
   void _tryDismissWaiting(BuildContext context, {bool alreadyClosed = false}) {
